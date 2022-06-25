@@ -8,14 +8,9 @@ mongoose.connect(process.env.MONGO_URL, { useNewUrlParser: true, useUnifiedTopol
 
 let userSchema = new mongoose.Schema({
     username: String,
-    count: Number,
-    log: [
-        {
-            description: String,
-            duration: Number,
-            date: Date,
-        },
-    ],
+    description: String,
+    duration: Number,
+    date: Date,
 });
 
 let User = mongoose.model("User", userSchema);
@@ -56,27 +51,19 @@ app.post("/api/users/:id/exercises", (req, res) => {
     const { description, duration } = req.body;
     const date = req.body.date ? new Date(req.body.date).toDateString() : new Date().toDateString();
 
-    User.findById(_id, (err, data) => {
+    User.findById(_id, (err, user) => {
         if (err) return console.error(err);
         else {
-            data.count = data.count + 1;
-            data.log.push({
-                description: description,
-                duration: duration,
-                date: date,
-            });
-            data.markModified("count");
-            data.markModified("log");
-            data.save((err, data) => {
+            user.description = description;
+            user.duration = duration;
+            user.date = date;
+            user.markModified("description");
+            user.markModified("duration");
+            user.markModified("date");
+            user.save((err, data) => {
                 if (err) return console.error(err);
                 else {
-                    res.json({
-                        username: data.username,
-                        description: data.log[data.log.length - 1].description,
-                        duration: data.log[data.log.length - 1].duration,
-                        date: data.log[data.log.length - 1].date,
-                        _id: data._id,
-                    });
+                    res.json(data);
                 }
             });
         }
