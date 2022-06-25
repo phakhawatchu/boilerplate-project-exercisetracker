@@ -8,17 +8,17 @@ mongoose.connect(process.env.MONGO_URL, { useNewUrlParser: true, useUnifiedTopol
 
 let userSchema = new mongoose.Schema({
     username: String,
-});
-
-let exerciseSchema = new mongoose.Schema({
-    username: String,
-    description: String,
-    duration: Number,
-    date: Date,
+    count: Number,
+    log: [
+        {
+            description: String,
+            duration: Number,
+            date: Date,
+        },
+    ],
 });
 
 let User = mongoose.model("User", userSchema);
-let Exercise = mongoose.model("Exercise", exerciseSchema);
 
 app.use(cors());
 app.use(express.static("public"));
@@ -38,6 +38,7 @@ app.post("/api/users", (req, res) => {
     const { username } = req.body;
     const user = new User({
         username: username,
+        count: 0,
     });
     user.save((err, data) => {
         if (err) return console.error(err);
@@ -54,25 +55,27 @@ app.post("/api/users/:id/exercises", (req, res) => {
     const _id = req.params.id;
     const { description, duration } = req.body;
     const date = req.body.date ? new Date(req.body.date).toDateString() : new Date().toDateString();
+
     User.findById(_id, (err, data) => {
         if (err) return console.error(err);
         else {
-            const username = data.username;
-            const exercise = new Exercise({
-                username: username,
-                date: date,
+            data.count = data.count + 1;
+            data.log.push({
                 description: description,
                 duration: duration,
+                date: date,
             });
-            exercise.save((err, data) => {
+            data.markModified("count");
+            data.markModified("log");
+            data.save((err, data) => {
                 if (err) return console.error(err);
                 else {
                     res.json({
-                        _id: data._id,
                         username: data.username,
-                        date: data.date,
-                        description: data.description,
-                        duration: data.duration,
+                        description: data.log[data.log.length - 1].description,
+                        duration: data.log[data.log.length - 1].duration,
+                        date: data.log[data.log.length - 1].date,
+                        _id: data._id,
                     });
                 }
             });
