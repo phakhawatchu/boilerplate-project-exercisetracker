@@ -10,7 +10,7 @@ let userSchema = new mongoose.Schema({
     username: String,
     description: String,
     duration: Number,
-    date: Date,
+    date: String,
 });
 
 let User = mongoose.model("User", userSchema);
@@ -49,14 +49,15 @@ app.post("/api/users", (req, res) => {
 app.post("/api/users/:id/exercises", (req, res) => {
     const _id = req.params.id;
     const { description, duration } = req.body;
-    const date = req.body.date ? new Date(req.body.date).toDateString() : new Date().toDateString();
+    const date = req.body.date ? new Date(req.body.date) : new Date();
+    const dateStr = date.toDateString();
 
     User.findById(_id, (err, user) => {
         if (err) return console.error(err);
         else {
             user.description = description;
             user.duration = duration;
-            user.date = date;
+            user.date = dateStr;
             user.markModified("description");
             user.markModified("duration");
             user.markModified("date");
