@@ -37,12 +37,25 @@ app.get("/api/users/:id/logs", (req, res) => {
     User.findById(req.params.id, (err, user) => {
         if (err) return console.error(err);
         else {
-            const count = user.exercises.length;
+            let logs = user.exercises;
+            if (req.query.from) {
+                let from = new Date(req.query.from) == "Invalid Date" ? new Date() : new Date(req.query.from);
+                from.setHours(0, 0, 0, 0);
+                logs = logs.filter((log) => new Date(log.date) >= new Date(from));
+            }
+            if (req.query.to) {
+                let to = new Date(req.query.to) == "Invalid Date" ? new Date() : new Date(req.query.to);
+                to.setHours(0, 0, 0, 0);
+                logs = logs.filter((log) => new Date(log.date) <= new Date(to));
+            }
+            if (req.query.limit) {
+                logs = logs.slice(0, req.query.limit);
+            }
             return res.json({
                 _id: user._id,
                 username: user.username,
-                count: count,
-                log: user.exercises,
+                count: logs.length,
+                log: logs,
             });
         }
     });
