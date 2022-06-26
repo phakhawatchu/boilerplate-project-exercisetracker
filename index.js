@@ -6,11 +6,15 @@ const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 mongoose.connect(process.env.MONGO_URL, { useNewUrlParser: true, useUnifiedTopology: true });
 
-let userSchema = new mongoose.Schema({
-    username: String,
-    description: String,
-    duration: Number,
-    date: String,
+const userSchema = mongoose.Schema({
+    username: { type: String, required: true, unique: false },
+    exercises: [
+        {
+            description: { type: String },
+            duration: { type: Number },
+            date: { type: String, required: false },
+        },
+    ],
 });
 
 let User = mongoose.model("User", userSchema);
@@ -52,22 +56,22 @@ app.post("/api/users/:id/exercises", (req, res) => {
     const date = req.body.date ? new Date(req.body.date) : new Date();
     const dateStr = date.toDateString();
 
-    User.findById(_id, (err, user) => {
+    const exercise = {
+        description: description,
+        duration: +duration,
+        date: dateStr,
+    };
+
+    User.findByIdAndUpdate(_id, { $push: { exercise: exercise } }, { new: true }, (err, user) => {
         if (err) return console.error(err);
-        else {
-            user.description = description;
-            user.duration = duration;
-            user.date = dateStr;
-            user.markModified("description");
-            user.markModified("duration");
-            user.markModified("date");
-            user.save((err, data) => {
-                if (err) return console.error(err);
-                else {
-                    res.json(data);
-                }
+        else
+            res.json({
+                username: user.username,
+                description: exercise.description,
+                duration: exercise.duration,
+                date: exercise.date,
+                _id: user.id,
             });
-        }
     });
 });
 
