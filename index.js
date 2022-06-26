@@ -33,6 +33,21 @@ app.get("/api/users", (req, res) => {
     });
 });
 
+app.get("/api/users/:id/logs", (req, res) => {
+    User.findById(req.params.id, (err, user) => {
+        if (err) return console.error(err);
+        else {
+            const count = user.exercises.length;
+            return res.json({
+                _id: user._id,
+                username: user.username,
+                count: count,
+                log: user.exercises,
+            });
+        }
+    });
+});
+
 app.post("/api/users", (req, res) => {
     const { username } = req.body;
     const user = new User({
@@ -62,7 +77,7 @@ app.post("/api/users/:id/exercises", (req, res) => {
         date: dateStr,
     };
 
-    User.findByIdAndUpdate(_id, { $push: { exercise: exercise } }, { new: true }, (err, user) => {
+    User.findByIdAndUpdate(_id, { $push: { exercises: exercise } }, { new: true }, (err, user) => {
         if (err) return console.error(err);
         else
             res.json({
